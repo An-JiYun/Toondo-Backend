@@ -64,13 +64,15 @@ public class UserController {
 
     // 내 정보 수정
     @PutMapping("/update-my")
-    public ResponseEntity<String> updateMyInfo(@RequestParam(required = false) String nickname,
-                                               @RequestParam(required = false) String password) {
+    public ResponseEntity<String> updateMyInfo(@RequestBody Map<String, String> updateRequest) {
         try {
             long userId = jwtService.getUserId();
             Optional<Users> user = userService.getUserById(userId);
 
             if (user.isPresent()) {
+                String nickname = updateRequest.get("nickname");
+                String password = updateRequest.get("password");
+
                 userService.updateUser(userId, nickname, password);
                 return ResponseEntity.ok("내 정보 수정 성공");
             } else {
