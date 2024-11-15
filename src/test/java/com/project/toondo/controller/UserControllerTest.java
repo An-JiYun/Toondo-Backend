@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -131,10 +132,18 @@ public class UserControllerTest {
         long userId = 1L;
         Users user = new Users("testId", "testPassword", "안지윤");
 
+        // Mocking
         when(jwtService.getUserId()).thenReturn(userId);
         when(userService.getUserById(userId)).thenReturn(Optional.of(user));
 
-        ResponseEntity<String> response = userController.updateMyInfo("newNickname", "newPassword");
+        // 요청 데이터
+        Map<String, String> updateRequest = Map.of(
+                "nickname", "newNickname",
+                "password", "newPassword"
+        );
+        ResponseEntity<String> response = userController.updateMyInfo(updateRequest);
+
+        // 결과 검증
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo("내 정보 수정 성공");
     }
@@ -144,11 +153,22 @@ public class UserControllerTest {
     public void testUpdateMyInfo_Failure_UserNotFound() {
         long userId = 1L;
 
+        // Mocking
         when(jwtService.getUserId()).thenReturn(userId);
         when(userService.getUserById(userId)).thenReturn(Optional.empty());
 
-        ResponseEntity<String> response = userController.updateMyInfo("newNickname", "newPassword");
+        // 요청 데이터
+        Map<String, String> updateRequest = Map.of(
+                "nickname", "newNickname",
+                "password", "newPassword"
+        );
+
+        // 컨트롤러 호출
+        ResponseEntity<String> response = userController.updateMyInfo(updateRequest);
+
+        // 결과 검증
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isEqualTo("유효하지 않은 토큰입니다.");
+
     }
 }
