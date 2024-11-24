@@ -1,5 +1,6 @@
 package com.project.toondo.controller;
 
+import com.project.toondo.dto.GoalDto;
 import com.project.toondo.dto.GoalRequest;
 import com.project.toondo.entity.Goals;
 import com.project.toondo.service.GoalService;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/goals")
@@ -36,13 +38,25 @@ public class GoalController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
         }
     }
+
     // 2. 모든 목표 조회
     @GetMapping("/list")
-    public ResponseEntity<List<Goals>> getAllGoals(HttpServletRequest request) {
+    public ResponseEntity<List<GoalDto>> getAllGoals(HttpServletRequest request) {
         try {
             String token = jwtService.extractTokenFromRequest(request);
             Long userId = jwtService.getUserId(token);
-            List<Goals> goals = goalService.getAllGoalsByUserId(userId);
+            List<GoalDto> goals = goalService.getAllGoalsByUserId(userId)
+                    .stream()
+                    .map(goal -> new GoalDto(
+                            goal.getGoalId(),
+                            goal.getGoalName(),
+                            goal.getStartline(),
+                            goal.getDeadline(),
+                            goal.getEstimatedProgress(),
+                            goal.getCurrentProgress(),
+                            goal.getCreatedAt()
+                    ))
+                    .collect(Collectors.toList());
             return ResponseEntity.ok(goals);
         } catch (JwtException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -55,7 +69,17 @@ public class GoalController {
         try {
             String token = jwtService.extractTokenFromRequest(request);
             Long userId = jwtService.getUserId(token);
-            Optional<Goals> goal = goalService.getGoalByIdAndUserId(goalId, userId);
+            Optional<GoalDto> goal = goalService.getGoalByIdAndUserId(goalId, userId)
+                    .map(g -> new GoalDto(
+                            g.getGoalId(),
+                            g.getGoalName(),
+                            g.getStartline(),
+                            g.getDeadline(),
+                            g.getEstimatedProgress(),
+                            g.getCurrentProgress(),
+                            g.getCreatedAt()
+                    ));
+
             // 목표가 존재하면 반환, 없으면 NOT_FOUND 반환
             return goal.<ResponseEntity<Object>>map(ResponseEntity::ok)
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 목표를 찾을 수 없습니다."));
@@ -101,4 +125,5 @@ public class GoalController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
         }
     }
+
 }
