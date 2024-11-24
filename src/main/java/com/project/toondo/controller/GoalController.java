@@ -4,6 +4,8 @@ import com.project.toondo.dto.GoalRequest;
 import com.project.toondo.entity.Goals;
 import com.project.toondo.service.GoalService;
 import com.project.toondo.service.JwtService;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,53 +26,79 @@ public class GoalController {
 
     // 1. 목표 등록
     @PostMapping("/create")
-    public ResponseEntity<String> createGoal(@RequestHeader("Authorization") String token, @RequestBody GoalRequest goalRequest) {
-        Long userId = jwtService.getUserId();  // JWT 토큰으로부터 userId 추출
-        goalService.createGoal(userId, goalRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body("목표가 등록되었습니다.");
+    public ResponseEntity<String> createGoal(HttpServletRequest request, @RequestBody GoalRequest goalRequest) {
+        try {
+            String token = jwtService.extractTokenFromRequest(request);
+            Long userId = jwtService.getUserId(token);
+            goalService.createGoal(userId, goalRequest);
+            return ResponseEntity.status(HttpStatus.CREATED).body("목표가 등록되었습니다.");
+        } catch (JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
+        }
     }
-
     // 2. 모든 목표 조회
     @GetMapping("/list")
-    public ResponseEntity<List<Goals>> getAllGoals(@RequestHeader("Authorization") String token) {
-        Long userId = jwtService.getUserId();  // JWT 토큰으로부터 userId 추출
-        List<Goals> goals = goalService.getAllGoalsByUserId(userId);
-        return ResponseEntity.ok(goals);
+    public ResponseEntity<List<Goals>> getAllGoals(HttpServletRequest request) {
+        try {
+            String token = jwtService.extractTokenFromRequest(request);
+            Long userId = jwtService.getUserId(token);
+            List<Goals> goals = goalService.getAllGoalsByUserId(userId);
+            return ResponseEntity.ok(goals);
+        } catch (JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
     }
 
     // 3. 특정 목표 조회
     @GetMapping("/detail/{goalId}")
-    public ResponseEntity<Object> getGoalById(@RequestHeader("Authorization") String token, @PathVariable Long goalId) {
-        Long userId = jwtService.getUserId();  // JWT 토큰으로부터 userId 추출
-        Optional<Goals> goal = goalService.getGoalByIdAndUserId(goalId, userId);
-        if (goal.isPresent()) {
-            return ResponseEntity.ok(goal.get());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 목표를 찾을 수 없습니다.");
+    public ResponseEntity<Object> getGoalById(HttpServletRequest request, @PathVariable Long goalId) {
+        try {
+            String token = jwtService.extractTokenFromRequest(request);
+            Long userId = jwtService.getUserId(token);
+            Optional<Goals> goal = goalService.getGoalByIdAndUserId(goalId, userId);
+            // 목표가 존재하면 반환, 없으면 NOT_FOUND 반환
+            return goal.<ResponseEntity<Object>>map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 목표를 찾을 수 없습니다."));
+        } catch (JwtException e) {
+            // JWT 검증 실패 시 UNAUTHORIZED 반환
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
+        } catch (Exception e) {
+            // 기타 예외 처리
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("내부 서버 오류가 발생했습니다.");
         }
     }
 
     // 4. 목표 삭제
     @DeleteMapping("/delete/{goalId}")
-    public ResponseEntity<String> deleteGoal(@RequestHeader("Authorization") String token, @PathVariable Long goalId) {
-        Long userId = jwtService.getUserId();  // JWT 토큰으로부터 userId 추출
-        boolean isDeleted = goalService.deleteGoal(goalId, userId);
-        if (isDeleted) {
-            return ResponseEntity.ok("목표가 삭제되었습니다.");
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 목표를 찾을 수 없습니다.");
+    public ResponseEntity<String> deleteGoal(HttpServletRequest request, @PathVariable Long goalId) {
+        try {
+            String token = jwtService.extractTokenFromRequest(request);
+            Long userId = jwtService.getUserId(token);
+            boolean isDeleted = goalService.deleteGoal(goalId, userId);
+            if (isDeleted) {
+                return ResponseEntity.ok("목표가 삭제되었습니다.");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 목표를 찾을 수 없습니다.");
+            }
+        } catch (JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
         }
     }
 
     // 5. 목표 수정
     @PutMapping("/update/{goalId}")
-    public ResponseEntity<String> updateGoal(@RequestHeader("Authorization") String token, @PathVariable Long goalId, @RequestBody GoalRequest goalRequest) {
-        Long userId = jwtService.getUserId();  // JWT 토큰으로부터 userId 추출
-        boolean isUpdated = goalService.updateGoal(goalId, userId, goalRequest);
-        if (isUpdated) {
-            return ResponseEntity.ok("목표가 수정되었습니다.");
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 목표를 찾을 수 없습니다.");
+    public ResponseEntity<String> updateGoal(HttpServletRequest request, @PathVariable Long goalId, @RequestBody GoalRequest goalRequest) {
+        try {
+            String token = jwtService.extractTokenFromRequest(request);
+            Long userId = jwtService.getUserId(token);
+            boolean isUpdated = goalService.updateGoal(goalId, userId, goalRequest);
+            if (isUpdated) {
+                return ResponseEntity.ok("목표가 수정되었습니다.");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 목표를 찾을 수 없습니다.");
+            }
+        } catch (JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
         }
     }
 }

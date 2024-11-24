@@ -74,7 +74,7 @@ public class GoalServiceTest {
         Goals goal2 = new Goals(null, "Exercise", LocalDate.now(), LocalDate.now().plusDays(14));
 
         when(userRepository.existsById(anyLong())).thenReturn(true);
-        when(goalRepository.findByUserId(anyLong())).thenReturn(Arrays.asList(goal1, goal2));
+        when(goalRepository.findByUserUserId(anyLong())).thenReturn(Arrays.asList(goal1, goal2));
 
         List<Goals> goals = goalService.getAllGoalsByUserId(1L);
 
@@ -99,7 +99,7 @@ public class GoalServiceTest {
         Goals goal = new Goals(null, "Study", LocalDate.now(), LocalDate.now().plusDays(7));
 
         when(userRepository.existsById(anyLong())).thenReturn(true);
-        when(goalRepository.findByGoalIdAndUserId(anyLong(), anyLong())).thenReturn(Optional.of(goal));
+        when(goalRepository.findByGoalIdAndUserUserId(anyLong(), anyLong())).thenReturn(Optional.of(goal));
 
         Optional<Goals> retrievedGoal = goalService.getGoalByIdAndUserId(1L, 1L);
 
@@ -121,7 +121,7 @@ public class GoalServiceTest {
     @DisplayName("목표 삭제 테스트")
     public void testDeleteGoal() {
         when(userRepository.existsById(anyLong())).thenReturn(true);
-        when(goalRepository.findByGoalIdAndUserId(anyLong(), anyLong())).thenReturn(Optional.of(new Goals()));
+        when(goalRepository.findByGoalIdAndUserUserId(anyLong(), anyLong())).thenReturn(Optional.of(new Goals()));
         doNothing().when(goalRepository).delete(any(Goals.class));
 
         boolean isDeleted = goalService.deleteGoal(1L, 1L);
@@ -146,7 +146,7 @@ public class GoalServiceTest {
         GoalRequest goalRequest = new GoalRequest("Updated Goal", LocalDate.now(), LocalDate.now().plusDays(10));
 
         when(userRepository.existsById(anyLong())).thenReturn(true);
-        when(goalRepository.findByGoalIdAndUserId(anyLong(), anyLong())).thenReturn(Optional.of(goal));
+        when(goalRepository.findByGoalIdAndUserUserId(anyLong(), anyLong())).thenReturn(Optional.of(goal));
         when(goalRepository.save(any(Goals.class))).thenReturn(goal);
 
         boolean isUpdated = goalService.updateGoal(1L, 1L, goalRequest);

@@ -13,9 +13,9 @@ import java.util.Date;
 
 @Service
 public class JwtService {
-//    private SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    private static final String SECRET_KEY = "YourFixedSecretKeyForJwt1234567890123456";
-    private final SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+    private SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+//    private static final String SECRET_KEY = "YourFixedSecretKeyForJwt1234567890123456";
+//    private final SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
 
     public String createJWT(Long userId){
         String token = Jwts.builder()
@@ -29,39 +29,39 @@ public class JwtService {
         return token;
     }
 
-    public String getJWT() {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
-                .getRequest();
-        String token = request.getHeader("Authorization");
-
-        System.out.println("Authorization Header Token: " + token);  // 디버깅: Authorization 헤더에서 읽은 토큰 출력
-
-        // token이 null이거나 "Bearer "만 포함된 경우 예외를 발생시킵니다.
-        if (token == null || token.trim().isEmpty() || token.equals("Bearer ")) {
-            throw new JwtException("토큰이 유효하지 않습니다.");
+    /**
+     * Authorization 헤더에서 JWT 추출
+     */
+    public String extractTokenFromRequest(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new JwtException("Authorization 헤더가 없거나 잘못되었습니다.");
         }
-
-        return token.replace("Bearer ", "");
+        return authHeader.substring(7); // "Bearer " 이후의 토큰 반환
     }
 
-    public Long getUserId(){
-        String accessToken = getJWT();
-        System.out.println("Access Token for Validation: " + accessToken);  // 디버깅: 검증용 JWT 출력
-
-        Jws<Claims> jws;
+    /**
+     * JWT에서 userId 추출
+     */
+    public Long getUserId(String token) {
         try {
-            jws = Jwts.parserBuilder()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
-                    .parseClaimsJws(accessToken);
+                    .parseClaimsJws(token) // 토큰 검증 및 파싱
+                    .getBody();
+            return claims.get("userId", Long.class); // userId 추출
+        } catch (ExpiredJwtException e) {
+            throw new JwtException("토큰이 만료되었습니다.", e);
+        } catch (UnsupportedJwtException e) {
+            throw new JwtException("지원되지 않는 토큰 형식입니다.", e);
+        } catch (MalformedJwtException e) {
+            throw new JwtException("잘못된 JWT 형식입니다.", e);
+        } catch (SignatureException e) {
+            throw new JwtException("서명이 유효하지 않습니다.", e);
         } catch (JwtException e) {
-            System.err.println("Invalid JWT: " + e.getMessage());  // 디버깅: JWT 검증 실패 메시지
-            throw new RuntimeException("토큰이 유효하지 않습니다.", e);
+            throw new JwtException("토큰 검증 실패: " + e.getMessage(), e);
         }
-
-        Long userId = jws.getBody().get("userId", Long.class);  // Long 타입으로 userId 추출
-        System.out.println("Extracted userId from JWT: " + userId);  // 디버깅: 추출된 userId 출력
-        return userId;
     }
 }
 
