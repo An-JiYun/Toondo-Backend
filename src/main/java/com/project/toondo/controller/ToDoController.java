@@ -126,7 +126,7 @@ public class ToDoController {
             String token = jwtService.extractTokenFromRequest(request);
             Long userId = jwtService.getUserId(token);
 
-            Map<String, Object> response = toDoService.createToDo(userId, dailyRequest);
+            Map<String, Object> response = toDoService.createDailyToDo(userId, dailyRequest);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -141,7 +141,7 @@ public class ToDoController {
             String token = jwtService.extractTokenFromRequest(request);
             Long userId = jwtService.getUserId(token);
 
-            List<Map<String, Object>> response = toDoService.getDailyToDos(userId, LocalDate.parse(date));
+            Map<String, Object> response = toDoService.getDailyToDos(userId, LocalDate.parse(date));
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -208,6 +208,20 @@ public class ToDoController {
         }
     }
 
+    // 특정 데일리 투두 완료 체크하기 (true -> false, false -> true)
+    @PatchMapping("/daily/completed/{todoId}")
+    public ResponseEntity<?> checkCompleted(HttpServletRequest request, @PathVariable Long todoId) {
+        try {
+            String token = jwtService.extractTokenFromRequest(request);
+            Long userId = jwtService.getUserId(token);
+            
+            Map<String, String> response = toDoService.checkCompleted(userId, todoId);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
 
 
