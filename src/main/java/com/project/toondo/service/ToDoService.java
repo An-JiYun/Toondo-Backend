@@ -1,6 +1,7 @@
 package com.project.toondo.service;
 
 import com.project.toondo.dto.DdayToDoRequest;
+import com.project.toondo.dto.DailyToDoRequest;
 import com.project.toondo.entity.*;
 import com.project.toondo.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,7 @@ public class ToDoService {
     // 특정 날의 디데이 투두 리스트 조회
     public Map<String, Object> getDdayToDos(Long userId, LocalDate date) {
         try {
+            validateUser(userId);
             List<DdayToDos> todos = ddayToDoRepository.findDateDdayToDos(userId, date);
 
             return buildResponse("Dday ToDo 리스트 조회 성공", todos);
@@ -70,6 +72,7 @@ public class ToDoService {
     // 특정 디데이 투두의 상세 정보 조회
     public Map<String, Object> getDdayToDoDetails(Long userId, Long todoId) {
         try {
+            validateUser(userId);
             DdayToDos todo = ddayToDoRepository.findByIdAndUserId(todoId, userId)
                     .orElseThrow(() -> new IllegalArgumentException("Dday ToDo를 찾을 수 없습니다."));
 
@@ -82,6 +85,7 @@ public class ToDoService {
     // 특정 디데이 투두 수정
     public Map<String, Object> updateDdayToDo(Long userId, Long todoId, DdayToDoRequest request) {
         try {
+            validateUser(userId);
             DdayToDos todo = ddayToDoRepository.findByIdAndUserId(todoId, userId)
                     .orElseThrow(() -> new IllegalArgumentException("Dday ToDo를 찾을 수 없습니다."));
 
@@ -126,6 +130,7 @@ public class ToDoService {
     // 특정 디데이 투두 삭제
     public Map<String, Object> deleteDdayToDo(Long userId, Long todoId) {
         try {
+            validateUser(userId);
             ddayToDoRepository.deleteById(todoId);
             return buildResponse("Dday ToDo 삭제 성공", null);
         } catch (Exception e) {
@@ -135,113 +140,162 @@ public class ToDoService {
 
 
     // 디데이 투두 진행률 수정
+    public Map<String, Object> updateDdayStatus(Long userId, Long todoId, Integer status) {
+        try {
+            validateUser(userId);
+            DdayToDos todo = ddayToDoRepository.findByIdAndUserId(todoId, userId)
+                    .orElseThrow(() -> new IllegalArgumentException("Dday ToDo를 찾을 수 없습니다."));
+
+            todo.setStatus(status);
+
+            ddayToDoRepository.save(todo);
+
+            return buildResponse("Dday ToDo 진행률 수정 성공", todo);
+        } catch (Exception e) {
+            throw new RuntimeException("Dday ToDo 진행률 수정 실패: " + e.getMessage());
+        }
+    }
 
 
     // Daily Todo CRUD
     // 새로운 데일리 투두 생성
+    public Map<String, Object> createDailyToDo(Long userId, DailyToDoRequest request) {
+        try {
+            Users user = validateUser(userId);
 
-    public List<Map<String, Object>> getToDosByDate(Long userId, LocalDate date) {
-        List<Map<String, Object>> result = new ArrayList<>();
-
-        // 삭제된 투두 ID 조회
-        List<Long> deletedTodoIds = deletedToDoRepository.findDeletedTodoIdsByUserIdAndDate(userId, date);
-
-        // 디데이 투두 조회 (삭제된 항목 제외)
-        ddayToDoRepository.findDateDdayToDos(userId, date).stream()
-                .filter(todo -> !deletedTodoIds.contains(todo.getDdayTodoId()))
-                .forEach(todo -> result.add(buildResponse("디데이 투두 조회 성공", todo)));
-
-        // 데일리 투두 조회 (삭제된 항목 제외)
-        dailyToDoRepository.findDateDailyToDos(userId, date).stream()
-                .filter(todo -> !deletedTodoIds.contains(todo.getDailyTodoId()))
-                .forEach(todo -> result.add(buildResponse("데일리 투두 조회 성공", todo)));
-
-        return result;
-    }
-
-    // 특정 todoId 상세 정보 조회
-    public Map<String, Object> getToDoDetails(Long userId, Long todoId, String type) {
-        if ("Dday".equalsIgnoreCase(type)) {
-            DdayToDos todo = ddayToDoRepository.findByIdAndUserId(todoId, userId)
-                    .orElseThrow(() -> new IllegalArgumentException("디데이 투두를 찾을 수 없습니다."));
-            return buildResponse("디데이 투두 조회 성공", todo);
-
-        } else {
-            DailyToDos todo = dailyToDoRepository.findByIdAndUserId(todoId, userId)
-                    .orElseThrow(() -> new IllegalArgumentException("데일리 투두를 찾을 수 없습니다."));
-            return buildResponse("데일리 투두 조회 성공", todo);
-        }
-    }
-
-    // 특정 할 일 삭제
-    public Map<String, String> deleteToDoForDate(Long userId, Long todoId, String type, LocalDate date) {
-        Users user = validateUser(userId);
-
-        if ("Dday".equalsIgnoreCase(type)) {
-            DdayToDos todo = ddayToDoRepository.findById(todoId)
-                    .orElseThrow(() -> new IllegalArgumentException("디데이 투두를 찾을 수 없습니다."));
-            saveDeletedToDo(user, todoId, type, date);
-        } else if ("Daily".equalsIgnoreCase(type)) {
-            DailyToDos todo = dailyToDoRepository.findById(todoId)
-                    .orElseThrow(() -> new IllegalArgumentException("데일리 투두를 찾을 수 없습니다."));
-            saveDeletedToDo(user, todoId, type, date);
-        } else {
-            throw new IllegalArgumentException("유효하지 않은 타입입니다.");
-        }
-        // 메시지만 반환
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "투두리스트가 성공적으로 삭제되었습니다.");
-
-        return response;
-    }
-
-    // DeletedToDos 테이블에 저장
-    private void saveDeletedToDo(Users user, Long todoId, String type, LocalDate date) {
-        DeletedToDos deletedToDo = new DeletedToDos();
-        deletedToDo.setUser(user);
-        deletedToDo.setTodoId(todoId);
-        deletedToDo.setType(type);
-        deletedToDo.setDate(date);
-        deletedToDoRepository.save(deletedToDo);
-    }
-
-    // 특정 할 일 수정
-    public Map<String, Object> updateToDo(Long userId, Long todoId, ToDoRequest request) {
-        if (request.getStartDate() != null && request.getEndDate() != null) {
-            DdayToDos todo = ddayToDoRepository.findByIdAndUserId(todoId, userId)
-                    .orElseThrow(() -> new IllegalArgumentException("디데이 투두를 찾을 수 없습니다."));
-
+            // goalId 확인 후 Goal 객체 설정
+            Goals goal = null;
             if (request.getGoalId() != null) {
-                Goals goal = goalRepository.findById(request.getGoalId()).orElse(null);
-                todo.setGoal(goal);
+                goal = goalRepository.findById(request.getGoalId()).orElse(null);
             }
 
-            todo.setDescription(request.getDescription());
-            todo.setStartDate(request.getStartDate());
-            todo.setEndDate(request.getEndDate());
-            todo.setUrgency(request.getUrgency());
-            todo.setImportance(request.getImportance());
-
-            ddayToDoRepository.save(todo);
-            return buildResponse("디데이 투두 수정 성공", todo);
-
-        } else {
-            DailyToDos todo = dailyToDoRepository.findByIdAndUserId(todoId, userId)
-                    .orElseThrow(() -> new IllegalArgumentException("데일리 투두를 찾을 수 없습니다."));
-
-            if (request.getGoalId() != null) {
-                Goals goal = goalRepository.findById(request.getGoalId()).orElse(null);
-                todo.setGoal(goal);
-            }
-
-            todo.setDescription(request.getDescription());
-            todo.setUrgency(request.getUrgency());
-            todo.setImportance(request.getImportance());
+            DailyToDos todo = new DailyToDos(user, goal, request.getDate(),
+                    request.getDescription(), request.getUrgency(), request.getImportance());
 
             dailyToDoRepository.save(todo);
-            return buildResponse("데일리 투두 수정 성공", todo);
+
+            return buildResponse("Daily ToDo 생성 성공", todo);
+        } catch (Exception e) {
+            throw new RuntimeException("Daily ToDo 생성 실패: " + e.getMessage());
         }
     }
+
+
+    // 특정 날의 데일리 투두 조회
+    public Map<String, Object> getDailyToDos(Long userId, LocalDate date) {
+        try {
+            validateUser(userId);
+            List<DailyToDos> todos = dailyToDoRepository.findDateDailyToDos(userId, date);
+
+            return buildResponse("Daily ToDo 리스트 조회 성공", todos);
+        } catch (Exception e) {
+            throw new RuntimeException("Daily ToDo 리스트 조회 실패: " + e.getMessage());
+        }
+    }
+
+    // 특정 데일리 투두의 상세 정보 조회
+    public Map<String, Object> getDailyToDoDetails(Long userId, Long todoId) {
+        try {
+            validateUser(userId);
+            DailyToDos todo = dailyToDoRepository.findByIdAndUserId(todoId, userId)
+                    .orElseThrow(() -> new IllegalArgumentException("Daily ToDo를 찾을 수 없습니다."));
+
+            return buildResponse("Daily ToDo 상세 조회 성공", todo);
+        } catch (Exception e) {
+            throw new RuntimeException("Daily ToDo 상세 조회 실패: " + e.getMessage());
+        }
+    }
+
+    // 특정 데일리 투두 수정
+    public Map<String, Object> updateDailyToDo(Long userId, Long todoId, DailyToDoRequest request) {
+        try {
+            validateUser(userId);
+            DailyToDos todo = dailyToDoRepository.findByIdAndUserId(todoId, userId)
+                    .orElseThrow(() -> new IllegalArgumentException("Daily ToDo를 찾을 수 없습니다."));
+
+            // goalId 확인 및 업데이트
+            if (request.getGoalId() != null) {
+                if (request.getGoalId() == 0) { // goalId가 null이 아니라 0과 같은 유효하지 않은 값일 경우 예외 처리
+                    todo.setGoal(null);
+                } else {
+                    Goals goal = goalRepository.findById(request.getGoalId())
+                            .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 Goal ID입니다."));
+                    todo.setGoal(goal);
+                }
+            } else {
+                todo.setGoal(null); // goalId가 null이면 Goal 필드를 null로 설정
+            }
+
+            // 필드 업데이트: null이 아닌 필드만 반영
+            if (request.getDescription() != null) {
+                todo.setDescription(request.getDescription());
+            }
+            if (request.getDate() != null) {
+                todo.setDate(request.getDate());
+            }
+            if (request.getUrgency() != null) {
+                todo.setUrgency(request.getUrgency());
+            }
+            if (request.getImportance() != null) {
+                todo.setImportance(request.getImportance());
+            }
+
+            dailyToDoRepository.save(todo);
+
+            return buildResponse("Daily ToDo 수정 성공", todo);
+        } catch (Exception e) {
+            throw new RuntimeException("Daily ToDo 수정 실패: " + e.getMessage());
+        }
+    }
+    
+    // 특정 데일리 투두 삭제
+    public Map<String, Object> deleteDailyToDo(Long userId, Long todoId) {
+        try {
+            validateUser(userId);
+            dailyToDoRepository.deleteById(todoId);
+            return buildResponse("Daily ToDo 삭제 성공", null);
+        } catch (Exception e) {
+            throw new RuntimeException("Daily ToDo 삭제 실패: " + e.getMessage());
+        }
+    }
+
+
+    // 특정 데일리 투두 내일하기
+    public Map<String, Object> moveToTomorrow(Long userId, Long todoId) {
+        try {
+            validateUser(userId);
+            DailyToDos todo = dailyToDoRepository.findByIdAndUserId(todoId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("데일리 투두를 찾을 수 없습니다."));
+            
+            todo.setDate(todo.getDate().plusDays(1)); // 날짜를 하루 증가
+            dailyToDoRepository.save(todo);
+
+            return buildResponse("Daily ToDo 내일하기 성공", todo);
+        } catch (Exception e) {
+            throw new RuntimeException("Daily ToDo 내일하기 실패: " + e.getMessage());
+        }
+    }
+
+    //  특정 데일리 투두 완료 체크하기 (true -> false, false -> true)
+    public Map<String, Object> checkCompleted(Long userId, Long todoId) {
+        try {
+            validateUser(userId);
+            DailyToDos todo = dailyToDoRepository.findByIdAndUserId(todoId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("데일리 투두를 찾을 수 없습니다."));
+            
+            todo.setCompleted(!todo.isCompleted());// (true -> false, false -> true)
+        
+            dailyToDoRepository.save(todo);
+
+            return buildResponse("Daily ToDo 완료 체크 성공", todo);
+        } catch (Exception e) {
+            throw new RuntimeException("Daily ToDo 왼료 체크 실패: " + e.getMessage());
+        }
+    }
+
+
+    // 특정 날짜의 모든 할 일 조회
+
 
     // 응답 생성
     private Map<String, Object> buildResponse(String message, Object todo) {
@@ -250,6 +304,7 @@ public class ToDoService {
 
         if (todo instanceof DdayToDos ddayToDo) {
             response.put("todoId", ddayToDo.getDdayTodoId());
+            response.put("goalId", ddayToDo.getGoalId());
             response.put("description", ddayToDo.getDescription());
             response.put("startDate", ddayToDo.getStartDate());
             response.put("endDate", ddayToDo.getEndDate());
@@ -258,10 +313,39 @@ public class ToDoService {
             response.put("status", ddayToDo.getStatus());
         } else if (todo instanceof DailyToDos dailyToDo) {
             response.put("todoId", dailyToDo.getDailyTodoId());
+            response.put("goalId", dailyToDo.getGoalId());
             response.put("description", dailyToDo.getDescription());
             response.put("urgency", dailyToDo.getUrgency());
             response.put("importance", dailyToDo.getImportance());
             response.put("completed", dailyToDo.isCompleted());
+        } else if (todo instanceof List<?> list) {
+            // 리스트 처리
+            List<Map<String, Object>> todoListResponse = new ArrayList<>();
+            for (Object item : list) {
+                if (item instanceof DdayToDos ddayToDo) {
+                    Map<String, Object> ddayMap = new LinkedHashMap<>();
+                    ddayMap.put("todoId", ddayToDo.getDdayTodoId());
+                    ddayMap.put("goalId", ddayToDo.getGoalId());
+                    ddayMap.put("description", ddayToDo.getDescription());
+                    ddayMap.put("startDate", ddayToDo.getStartDate());
+                    ddayMap.put("endDate", ddayToDo.getEndDate());
+                    ddayMap.put("urgency", ddayToDo.getUrgency());
+                    ddayMap.put("importance", ddayToDo.getImportance());
+                    ddayMap.put("status", ddayToDo.getStatus());
+                    todoListResponse.add(ddayMap);
+                } else if (item instanceof DailyToDos dailyToDo) {
+                    Map<String, Object> dailyMap = new LinkedHashMap<>();
+                    dailyMap.put("todoId", dailyToDo.getDailyTodoId());
+                    response.put("goalId", dailyToDo.getGoalId());
+                    dailyMap.put("description", dailyToDo.getDescription());
+                    dailyMap.put("date", dailyToDo.getDate());
+                    dailyMap.put("urgency", dailyToDo.getUrgency());
+                    dailyMap.put("importance", dailyToDo.getImportance());
+                    dailyMap.put("completed", dailyToDo.isCompleted());
+                    todoListResponse.add(dailyMap);
+                }
+            }
+            response.put("todos", todoListResponse);
         }
 
         return response;
