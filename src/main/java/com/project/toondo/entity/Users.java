@@ -19,7 +19,7 @@ public class Users{
     private Long userId;
 
     @Column(name = "login_id", nullable = false, unique = true)
-    private String loginId;
+    private Long loginId;
 
     @Column(nullable = false)
     private String password;
@@ -35,11 +35,9 @@ public class Users{
 
 
     // 생성자
-
-    public Users(String loginId, String password, String nickname) {
+    public Users(Long loginId, String password) {
         this.loginId = loginId;
         this.password = password;
-        this.nickname = nickname;
     }
 
     // 엔티티 생성 시 날짜 자동 설정
