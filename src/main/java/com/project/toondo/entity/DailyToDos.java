@@ -43,6 +43,18 @@ public class DailyToDos {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    public DailyToDos(Users user, Goals goal, LocalDate date,
+                    String description, Integer urgency, Integer importance) {
+        this.user = user;
+        this.goal = goal;
+        this.date = date;
+        this.description = description;
+        this.urgency = urgency;
+        this.importance = importance;
+        this.completed = false; // 초기값 설정
+    }
+
+
     // 엔티티 생성 시 날짜 자동 설정
     @PrePersist
     protected void onCreate() {
