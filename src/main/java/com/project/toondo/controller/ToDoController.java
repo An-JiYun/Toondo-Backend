@@ -186,7 +186,7 @@ public class ToDoController {
             String token = jwtService.extractTokenFromRequest(request);
             Long userId = jwtService.getUserId(token);
 
-            Map<String, String> response = toDoService.deleteDailyToDo(userId, todoId);
+            Map<String, Object> response = toDoService.deleteDailyToDo(userId, todoId);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -200,7 +200,7 @@ public class ToDoController {
         try {
             String token = jwtService.extractTokenFromRequest(request);
             Long userId = jwtService.getUserId(token);
-            Map<String, String> response = toDoService.moveToTomorrow(userId, todoId);
+            Map<String, Object> response = toDoService.moveToTomorrow(userId, todoId);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -215,7 +215,7 @@ public class ToDoController {
             String token = jwtService.extractTokenFromRequest(request);
             Long userId = jwtService.getUserId(token);
             
-            Map<String, String> response = toDoService.checkCompleted(userId, todoId);
+            Map<String, Object> response = toDoService.checkCompleted(userId, todoId);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -229,20 +229,32 @@ public class ToDoController {
 
     ///////
     // 특정 날짜의 모든 할 일 조회
-    @GetMapping("/list/{date}")
-    public ResponseEntity<?> getToDosByDate(HttpServletRequest request, @PathVariable String date) {
+    @GetMapping("/all/{date}")
+    public ResponseEntity<?> getAllToDosByDate(HttpServletRequest request, @PathVariable String date) {
         try {
             String token = jwtService.extractTokenFromRequest(request);
             Long userId = jwtService.getUserId(token);
-            LocalDate parsedDate = LocalDate.parse(date);
-            List<Map<String, Object>> response = toDoService.getToDosByDate(userId, parsedDate);
-            return ResponseEntity.ok(response);
 
-        } catch (JwtException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
+            Map<String, Object> response = toDoService.getAllToDosByDate(userId, LocalDate.parse(date));
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    //특정 달의 한 달치 모든 할 일 조회
+    @GetMapping("/all/month/{yearMonth}")
+    public ResponseEntity<?> getAllToDosByMonth(HttpServletRequest request, @PathVariable String yearMonth) {
+        try {
+            String token = jwtService.extractTokenFromRequest(request);
+            Long userId = jwtService.getUserId(token);
+
+            Map<String, Object> response = toDoService.getAllToDosByMonth(userId, yearMonth);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
 
 }

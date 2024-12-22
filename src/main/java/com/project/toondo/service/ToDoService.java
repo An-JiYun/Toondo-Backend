@@ -7,7 +7,7 @@ import com.project.toondo.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.*;
 import java.util.*;
 
 @Service
@@ -295,6 +295,44 @@ public class ToDoService {
 
 
     // 특정 날짜의 모든 할 일 조회
+    public Map<String, Object> getAllToDosByDate(Long userId, LocalDate date) {
+        try {
+            List<DailyToDos> dailyToDos = dailyToDoRepository.findByUserIdAndDate(userId, date);
+            List<DdayToDos> ddayToDos = ddayToDoRepository.findByDate(userId, date);
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("date", date);
+            response.put("dailyToDos", dailyToDos);
+            response.put("ddayToDos", ddayToDos);
+
+            return response;
+        } catch (Exception e) {
+            throw new RuntimeException("특정 날짜의 모든 할 일 조회 실패: " + e.getMessage());
+        }
+    }
+
+    public Map<String, Object> getAllToDosByMonth(Long userId, String yearMonth) {
+        try {
+            YearMonth ym = YearMonth.parse(yearMonth);
+            LocalDate startDate = ym.atDay(1);
+            LocalDate endDate = ym.atEndOfMonth();
+
+            List<DailyToDos> dailyToDos = dailyToDoRepository.findByUserIdAndMonth(userId, startDate, endDate);
+            List<DdayToDos> ddayToDos = ddayToDoRepository.findByMonth(userId, startDate, endDate);
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("month", yearMonth);
+            response.put("dailyToDos", dailyToDos);
+            response.put("ddayToDos", ddayToDos);
+
+            return response;
+        } catch (Exception e) {
+            throw new RuntimeException("특정 달의 모든 할 일 조회 실패: " + e.getMessage());
+        }
+    }
+
+
+
 
 
     // 응답 생성
@@ -304,7 +342,7 @@ public class ToDoService {
 
         if (todo instanceof DdayToDos ddayToDo) {
             response.put("todoId", ddayToDo.getDdayTodoId());
-            response.put("goalId", ddayToDo.getGoalId());
+            response.put("goalId", ddayToDo.getGoal());
             response.put("description", ddayToDo.getDescription());
             response.put("startDate", ddayToDo.getStartDate());
             response.put("endDate", ddayToDo.getEndDate());
@@ -313,7 +351,7 @@ public class ToDoService {
             response.put("status", ddayToDo.getStatus());
         } else if (todo instanceof DailyToDos dailyToDo) {
             response.put("todoId", dailyToDo.getDailyTodoId());
-            response.put("goalId", dailyToDo.getGoalId());
+            response.put("goalId", dailyToDo.getGoal());
             response.put("description", dailyToDo.getDescription());
             response.put("urgency", dailyToDo.getUrgency());
             response.put("importance", dailyToDo.getImportance());
@@ -325,7 +363,7 @@ public class ToDoService {
                 if (item instanceof DdayToDos ddayToDo) {
                     Map<String, Object> ddayMap = new LinkedHashMap<>();
                     ddayMap.put("todoId", ddayToDo.getDdayTodoId());
-                    ddayMap.put("goalId", ddayToDo.getGoalId());
+                    ddayMap.put("goalId", ddayToDo.getGoal());
                     ddayMap.put("description", ddayToDo.getDescription());
                     ddayMap.put("startDate", ddayToDo.getStartDate());
                     ddayMap.put("endDate", ddayToDo.getEndDate());
@@ -336,7 +374,7 @@ public class ToDoService {
                 } else if (item instanceof DailyToDos dailyToDo) {
                     Map<String, Object> dailyMap = new LinkedHashMap<>();
                     dailyMap.put("todoId", dailyToDo.getDailyTodoId());
-                    response.put("goalId", dailyToDo.getGoalId());
+                    response.put("goalId", dailyToDo.getGoal());
                     dailyMap.put("description", dailyToDo.getDescription());
                     dailyMap.put("date", dailyToDo.getDate());
                     dailyMap.put("urgency", dailyToDo.getUrgency());
