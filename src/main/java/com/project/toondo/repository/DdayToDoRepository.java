@@ -15,8 +15,7 @@ public interface DdayToDoRepository extends JpaRepository<DdayToDos, Long> {
     Optional<DdayToDos> findByIdAndUserId(@Param("todoId") Long todoId, @Param("userId") Long userId);
 
     // 특정 유저 ID의 특정 날짜에 해당하는 디데이 투두 조회
-    @Query("SELECT d FROM DdayToDos d WHERE d.user.userId = :userId " +
-            "AND d.startDate <= :date AND d.endDate >= :date")
+    @Query("SELECT d FROM DdayToDos d WHERE d.user.userId = :userId AND :date BETWEEN d.startDate AND d.endDate")
     List<DdayToDos> findDateDdayToDos(@Param("userId") Long userId, @Param("date") LocalDate date);
 
 

@@ -61,7 +61,20 @@ public class ToDoService {
             validateUser(userId);
             List<DdayToDos> todos = ddayToDoRepository.findDateDdayToDos(userId, date);
 
-            return buildResponse("Dday ToDo 리스트 조회 성공", todos);
+            // 응답을 담을 리스트 생성
+            List<Map<String, Object>> todoList = new ArrayList<>();
+
+            for (DdayToDos todo : todos) {
+                Map<String, Object> singleTodoResponse = buildResponse("Success", todo);
+                todoList.add(singleTodoResponse);
+            }
+
+            // 최종 응답 생성
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Dday ToDo 리스트 조회 성공");
+            response.put("todos", todoList);
+
+            return response;
         } catch (Exception e) {
             throw new RuntimeException("Dday ToDo 리스트 조회 실패: " + e.getMessage());
         }
@@ -185,7 +198,20 @@ public class ToDoService {
             validateUser(userId);
             List<DailyToDos> todos = dailyToDoRepository.findDateDailyToDos(userId, date);
 
-            return buildResponse("Daily ToDo 리스트 조회 성공", todos);
+            // 응답을 담을 리스트 생성
+            List<Map<String, Object>> todoList = new ArrayList<>();
+
+            for (DailyToDos todo : todos) {
+                Map<String, Object> singleTodoResponse = buildResponse("Success", todo);
+                todoList.add(singleTodoResponse);
+            }
+
+            // 최종 응답 생성
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Daily ToDo 리스트 조회 성공");
+            response.put("todos", todoList);
+
+            return response;
         } catch (Exception e) {
             throw new RuntimeException("Daily ToDo 리스트 조회 실패: " + e.getMessage());
         }
