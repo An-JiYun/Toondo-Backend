@@ -2,7 +2,6 @@ package com.project.toondo.controller;
 
 import com.project.toondo.dto.UserRequest;
 import com.project.toondo.dto.UserUpdateRequest;
-import com.project.toondo.entity.Users;
 import com.project.toondo.service.JwtService;
 import com.project.toondo.service.UserService;
 import io.jsonwebtoken.JwtException;
@@ -47,7 +46,7 @@ public class UserController {
     }
 
     // 닉네임만 저장
-    @PatchMapping("/save-nickname")
+    @PutMapping("/save-nickname")
     public ResponseEntity<?> saveNickname(HttpServletRequest request, @RequestBody Map<String, String> requestBody) {
         try {
             // JWT에서 사용자 ID 추출

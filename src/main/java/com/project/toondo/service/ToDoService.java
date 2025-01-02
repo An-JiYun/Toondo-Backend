@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ToDoService {
@@ -18,9 +19,6 @@ public class ToDoService {
 
     @Autowired
     private DailyToDoRepository dailyToDoRepository;
-
-    @Autowired
-    private DeletedToDoRepository deletedToDoRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -297,13 +295,25 @@ public class ToDoService {
     // 특정 날짜의 모든 할 일 조회
     public Map<String, Object> getAllToDosByDate(Long userId, LocalDate date) {
         try {
+            validateUser(userId);
+
             List<DailyToDos> dailyToDos = dailyToDoRepository.findByUserIdAndDate(userId, date);
             List<DdayToDos> ddayToDos = ddayToDoRepository.findByDate(userId, date);
 
+            // 리스트를 각각 변환
+            List<Map<String, Object>> dailyToDoResponses = dailyToDos.stream()
+                    .map(todo -> buildResponse("Success", todo))
+                    .collect(Collectors.toList());
+
+            List<Map<String, Object>> ddayToDoResponses = ddayToDos.stream()
+                    .map(todo -> buildResponse("Success", todo))
+                    .collect(Collectors.toList());
+
+            // 응답 데이터 구성
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("date", date);
-            response.put("dailyToDos", dailyToDos);
-            response.put("ddayToDos", ddayToDos);
+            response.put("dailyToDos", dailyToDoResponses);
+            response.put("ddayToDos", ddayToDoResponses);
 
             return response;
         } catch (Exception e) {
@@ -312,7 +322,12 @@ public class ToDoService {
     }
 
     public Map<String, Object> getAllToDosByMonth(Long userId, String yearMonth) {
+        if (yearMonth == null || yearMonth.isEmpty()) {
+            throw new IllegalArgumentException("yearMonth는 필수 입력값이며, 'YYYY-MM' 형식이어야 합니다.");
+        }
         try {
+            validateUser(userId);
+
             YearMonth ym = YearMonth.parse(yearMonth);
             LocalDate startDate = ym.atDay(1);
             LocalDate endDate = ym.atEndOfMonth();
@@ -320,10 +335,20 @@ public class ToDoService {
             List<DailyToDos> dailyToDos = dailyToDoRepository.findByUserIdAndMonth(userId, startDate, endDate);
             List<DdayToDos> ddayToDos = ddayToDoRepository.findByMonth(userId, startDate, endDate);
 
+            // 리스트를 각각 변환
+            List<Map<String, Object>> dailyToDoResponses = dailyToDos.stream()
+                    .map(todo -> buildResponse("Success", todo))
+                    .collect(Collectors.toList());
+
+            List<Map<String, Object>> ddayToDoResponses = ddayToDos.stream()
+                    .map(todo -> buildResponse("Success", todo))
+                    .collect(Collectors.toList());
+
+            // 응답 데이터 구성
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("month", yearMonth);
-            response.put("dailyToDos", dailyToDos);
-            response.put("ddayToDos", ddayToDos);
+            response.put("dailyToDos", dailyToDoResponses);
+            response.put("ddayToDos", ddayToDoResponses);
 
             return response;
         } catch (Exception e) {
@@ -356,34 +381,6 @@ public class ToDoService {
             response.put("urgency", dailyToDo.getUrgency());
             response.put("importance", dailyToDo.getImportance());
             response.put("completed", dailyToDo.isCompleted());
-        } else if (todo instanceof List<?> list) {
-            // 리스트 처리
-            List<Map<String, Object>> todoListResponse = new ArrayList<>();
-            for (Object item : list) {
-                if (item instanceof DdayToDos ddayToDo) {
-                    Map<String, Object> ddayMap = new LinkedHashMap<>();
-                    ddayMap.put("todoId", ddayToDo.getDdayTodoId());
-                    ddayMap.put("goalId", ddayToDo.getGoal());
-                    ddayMap.put("description", ddayToDo.getDescription());
-                    ddayMap.put("startDate", ddayToDo.getStartDate());
-                    ddayMap.put("endDate", ddayToDo.getEndDate());
-                    ddayMap.put("urgency", ddayToDo.getUrgency());
-                    ddayMap.put("importance", ddayToDo.getImportance());
-                    ddayMap.put("status", ddayToDo.getStatus());
-                    todoListResponse.add(ddayMap);
-                } else if (item instanceof DailyToDos dailyToDo) {
-                    Map<String, Object> dailyMap = new LinkedHashMap<>();
-                    dailyMap.put("todoId", dailyToDo.getDailyTodoId());
-                    response.put("goalId", dailyToDo.getGoal());
-                    dailyMap.put("description", dailyToDo.getDescription());
-                    dailyMap.put("date", dailyToDo.getDate());
-                    dailyMap.put("urgency", dailyToDo.getUrgency());
-                    dailyMap.put("importance", dailyToDo.getImportance());
-                    dailyMap.put("completed", dailyToDo.isCompleted());
-                    todoListResponse.add(dailyMap);
-                }
-            }
-            response.put("todos", todoListResponse);
         }
 
         return response;

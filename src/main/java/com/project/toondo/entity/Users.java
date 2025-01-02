@@ -24,7 +24,7 @@ public class Users{
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @Column
     private String nickname;
 
     @Column(name = "created_at", nullable = false, updatable = false)

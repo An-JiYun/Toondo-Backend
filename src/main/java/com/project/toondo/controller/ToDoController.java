@@ -101,7 +101,7 @@ public class ToDoController {
     }
 
     // 디데이 투두 진행률 수정
-    @PatchMapping("/dday/update-status/{todoId}")
+    @PutMapping("/dday/update-status/{todoId}")
     public ResponseEntity<?> updateDdayStatus(HttpServletRequest request, @PathVariable Long todoId, @RequestParam Integer status) {
         try {
             String token = jwtService.extractTokenFromRequest(request);
@@ -135,7 +135,7 @@ public class ToDoController {
     }
 
     // 특정 날의 데일리 투두 조회
-    @GetMapping("/daily/{date}")
+    @GetMapping("/daily/list/{date}")
     public ResponseEntity<?> getDailyToDos(HttpServletRequest request, @PathVariable String date) {
         try {
             String token = jwtService.extractTokenFromRequest(request);
@@ -195,7 +195,7 @@ public class ToDoController {
     }
 
     // 특정 데일리 투두 내일하기
-    @PatchMapping("/daily/move-tomorrow/{todoId}")
+    @PutMapping("/daily/move-tomorrow/{todoId}")
     public ResponseEntity<?> moveToTomorrow(HttpServletRequest request, @PathVariable Long todoId) {
         try {
             String token = jwtService.extractTokenFromRequest(request);
@@ -209,7 +209,7 @@ public class ToDoController {
     }
 
     // 특정 데일리 투두 완료 체크하기 (true -> false, false -> true)
-    @PatchMapping("/daily/completed/{todoId}")
+    @PutMapping("/daily/completed/{todoId}")
     public ResponseEntity<?> checkCompleted(HttpServletRequest request, @PathVariable Long todoId) {
         try {
             String token = jwtService.extractTokenFromRequest(request);
