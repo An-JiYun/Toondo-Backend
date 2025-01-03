@@ -23,7 +23,7 @@ public class UserController {
     @Autowired
     private JwtService jwtService;
 
-    @GetMapping("/check-phone-number")
+    @PostMapping("/check-phone-number")
     public ResponseEntity<?> checkPhoneNumber(@RequestBody Map<String, Long> requestBody) {
         try {
             Long loginId = requestBody.get("loginId");
