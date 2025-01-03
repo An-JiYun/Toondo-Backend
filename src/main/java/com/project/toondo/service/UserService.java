@@ -22,6 +22,13 @@ public class UserService {
     @Autowired
     private JwtService jwtService;
 
+    public boolean checkPhoneNumber(Long loginId) {
+        if (loginId == null) {
+            throw new IllegalArgumentException("전화번호가 비어있습니다.");
+        }
+        return userRepository.findByLoginId(loginId).isPresent();
+    }
+
     public Map<String, Object> signupUser(UserRequest userRequest) {
         if (userRepository.findByLoginId(userRequest.getLoginId()).isPresent()) {
             throw new IllegalArgumentException("이미 존재하는 로그인 ID입니다.");

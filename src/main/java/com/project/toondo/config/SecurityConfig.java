@@ -22,7 +22,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/users/signup", "/users/login").permitAll() // 회원가입, 로그인 허용
+                        .requestMatchers("/users/check-phone-number", "/users/signup", "/users/login").permitAll() // 회원가입, 로그인 허용
                         .anyRequest().authenticated() // 나머지 요청도 인증 필요
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // JWT 필터 추가

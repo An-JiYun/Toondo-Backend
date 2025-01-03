@@ -23,6 +23,17 @@ public class UserController {
     @Autowired
     private JwtService jwtService;
 
+    @GetMapping("/check-phone-number")
+    public ResponseEntity<?> checkPhoneNumber(@RequestBody Map<String, Long> requestBody) {
+        try {
+            Long loginId = requestBody.get("phoneNumber");
+            boolean exists = userService.checkPhoneNumber(loginId);
+            return ResponseEntity.ok(Map.of("exists", exists));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
     @PostMapping("/signup")
     public ResponseEntity<?> signupUser(@RequestBody UserRequest userRequest) {
         try {

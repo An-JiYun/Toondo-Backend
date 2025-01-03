@@ -54,7 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
         // 로그인, 회원가입 경로는 필터 제외
-        return path.startsWith("/users/login") || path.startsWith("/users/signup");
+        return path.startsWith("/users/check-phone-number") || path.startsWith("/users/login") || path.startsWith("/users/signup");
     }
 
 }
