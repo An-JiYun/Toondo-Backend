@@ -26,7 +26,7 @@ public class UserController {
     @GetMapping("/check-phone-number")
     public ResponseEntity<?> checkPhoneNumber(@RequestBody Map<String, Long> requestBody) {
         try {
-            Long loginId = requestBody.get("phoneNumber");
+            Long loginId = requestBody.get("loginId");
             boolean exists = userService.checkPhoneNumber(loginId);
             return ResponseEntity.ok(Map.of("exists", exists));
         } catch (IllegalArgumentException e) {
