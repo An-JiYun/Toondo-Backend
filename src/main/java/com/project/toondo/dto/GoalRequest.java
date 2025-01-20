@@ -13,6 +13,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class GoalRequest {
     private String goalName;
-    private LocalDate startline;
-    private LocalDate deadline;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private String icon;
 }

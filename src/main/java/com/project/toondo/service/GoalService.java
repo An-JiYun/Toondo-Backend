@@ -31,7 +31,7 @@ public class GoalService {
         Users user = validateUser(userId);
 
         // 목표 생성
-        Goals goal = new Goals(user, goalRequest.getGoalName(), goalRequest.getStartline(), goalRequest.getDeadline());
+        Goals goal = new Goals(user, goalRequest.getGoalName(), goalRequest.getStartDate(), goalRequest.getEndDate(), goalRequest.getIcon());
         goalRepository.save(goal);
 
         // 응답 데이터 구성
@@ -83,12 +83,16 @@ public class GoalService {
         if (goalRequest.getGoalName() != null) {
             goal.setGoalName(goalRequest.getGoalName());
         }
-        if (goalRequest.getStartline() != null) {
-            goal.setStartline(goalRequest.getStartline());
+        if (goalRequest.getStartDate() != null) {
+            goal.setStartDate(goalRequest.getStartDate());
         }
-        if (goalRequest.getDeadline() != null) {
-            goal.setDeadline(goalRequest.getDeadline());
+        if (goalRequest.getEndDate() != null) {
+            goal.setEndDate(goalRequest.getEndDate());
         }
+        if (goalRequest.getIcon() != null) {
+            goal.setIcon(goalRequest.getIcon());
+        }
+
         goalRepository.save(goal);
 
         return buildResponse("목표가 성공적으로 수정되었습니다.", goal);
@@ -100,10 +104,12 @@ public class GoalService {
         response.put("message", message);
         response.put("goalId", goal.getGoalId());
         response.put("goalName", goal.getGoalName());
-        response.put("startline", goal.getStartline());
-        response.put("deadline", goal.getDeadline());
-        response.put("estimatedProgress", goal.getEstimatedProgress());
-        response.put("currentProgress", goal.getCurrentProgress());
+        response.put("startDate", goal.getStartDate());
+        response.put("endDate", goal.getEndDate());
+        response.put("progress", goal.getProgress());
+        response.put("isCompleted", goal.isCompleted());
+        response.put("icon", goal.getIcon());
+        response.put("status", goal.getStatus());
         response.put("createdAt", goal.getCreatedAt());
         return response;
     }

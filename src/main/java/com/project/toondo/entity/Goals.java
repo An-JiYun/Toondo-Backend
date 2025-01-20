@@ -28,28 +28,33 @@ public class Goals {
     private String goalName;
 
     @Column(nullable = false)
-    private LocalDate startline;
+    private LocalDate startDate;
 
     @Column(nullable = false)
-    private LocalDate deadline;
+    private LocalDate endDate;
 
-    @Column(name = "estimated_progress", nullable = false)
-    private Integer estimatedProgress = 0;
+    @Column
+    private Integer progress;
 
-    @Column(name = "current_progress", nullable = false)
-    private Integer currentProgress = 0;
+    @Column
+    private boolean isCompleted;
+
+    @Column
+    private Integer status; // 0:진행중, 1:완료, 2:포기
+
+    @Column
+    private String icon;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     // 생성자
-    public Goals(Users user, String goalName, LocalDate startline, LocalDate deadline) {
+    public Goals(Users user, String goalName, LocalDate startDate, LocalDate endDate, String icon) {
         this.user = user;
         this.goalName = goalName;
-        this.startline = startline;
-        this.deadline = deadline;
-        this.estimatedProgress = 0;
-        this.currentProgress = 0;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.icon = icon;
     }
 
     // 엔티티 생성 시 날짜 자동 설정
