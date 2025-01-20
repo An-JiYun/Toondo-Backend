@@ -24,9 +24,9 @@ public class UserController {
     private JwtService jwtService;
 
     @PostMapping("/check-phone-number")
-    public ResponseEntity<?> checkPhoneNumber(@RequestBody Map<String, Long> requestBody) {
+    public ResponseEntity<?> checkPhoneNumber(@RequestBody Map<String, String> requestBody) {
         try {
-            Long loginId = requestBody.get("loginId");
+            String loginId = requestBody.get("loginId");
             boolean exists = userService.checkPhoneNumber(loginId);
             return ResponseEntity.ok(Map.of("exists", exists));
         } catch (IllegalArgumentException e) {
