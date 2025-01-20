@@ -19,7 +19,7 @@ public class Users{
     private Long userId;
 
     @Column(name = "login_id", nullable = false, unique = true)
-    private Long loginId;
+    private String loginId;
 
     @Column(nullable = false)
     private String password;
@@ -35,7 +35,7 @@ public class Users{
 
 
     // 생성자
-    public Users(Long loginId, String password) {
+    public Users(String loginId, String password) {
         this.loginId = loginId;
         this.password = password;
     }
