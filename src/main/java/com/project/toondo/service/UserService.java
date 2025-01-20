@@ -114,6 +114,7 @@ public class UserService {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("message", message);
         response.put("userId", user.getUserId());
+        response.put("loginId", user.getLoginId());
         response.put("password", user.getPassword());
         response.put("nickname", user.getNickname());
         response.put("points", user.getPoints());
