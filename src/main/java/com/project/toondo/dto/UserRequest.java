@@ -10,6 +10,6 @@ import lombok.Setter;
 @NoArgsConstructor  // 기본 생성자 생성
 @AllArgsConstructor // 모든 필드를 포함하는 생성자 생성
 public class UserRequest {
-    private Long loginId;
+    private String loginId;
     private String password;
 }

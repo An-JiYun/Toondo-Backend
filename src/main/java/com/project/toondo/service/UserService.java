@@ -22,7 +22,7 @@ public class UserService {
     @Autowired
     private JwtService jwtService;
 
-    public boolean checkPhoneNumber(Long loginId) {
+    public boolean checkPhoneNumber(String loginId) {
         if (loginId == null) {
             throw new IllegalArgumentException("전화번호가 비어있습니다.");
         }
